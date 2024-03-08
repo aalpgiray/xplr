@@ -22,11 +22,11 @@ const program = Effect.gen(function* (_) {
 
   const [scriptName] = import.meta.env["ARGS"]?.slice(2) ?? ["dev"];
 
+  const packages = yield* _(getPackages(runningDirectory));
+
   const dependencyInstaller = yield* _(
     Effect.fork(installPackages(runningDirectory)),
   );
-
-  const packages = yield* _(getPackages(runningDirectory));
 
   const selectedPackages = yield* _(
     pipe(
@@ -77,23 +77,33 @@ const program = Effect.gen(function* (_) {
   return `Running scripts for ${selectedPackages.map((s) => s.name).join(", ")}`;
 });
 
-Effect.runPromise(
-  program.pipe(
-    Effect.catchAll((cause) => {
-      switch (cause._tag) {
-        case "NoPackagesSelectedError":
-          return Console.log("No packages selected");
-        case "DiscoverPackagesError":
-          return Console.log("Error discovering packages");
-        case "InstallPackagesError":
-          return Console.log("Error installing packages");
-        case "ScriptRunnerError":
-          return Console.log("Error running scripts");
-        case "InvalidJsonError":
-          return Console.log("Invalid JSON");
-        default:
-          return Console.log("Unknown error");
-      }
-    }),
-  ),
-).then(console.log, console.error);
+const recoveredProgram = program.pipe(
+  Effect.catchTags({
+    InvalidDirectoryError: () => {
+      return Effect.succeed("Invalid directory");
+    },
+    ReadJsonFileError: () => {
+      return Effect.succeed("Failed to read package.json");
+    },
+    ParseError: () => {
+      return Effect.succeed("Failed to parse package.json");
+    },
+    NoPackagesSelectedError: () => {
+      return Effect.succeed("No packages selected");
+    },
+    DiscoverPackagesError: () => {
+      return Effect.succeed("Failed to discover packages");
+    },
+    ScriptRunnerError: () => {
+      return Effect.succeed("Failed to run script");
+    },
+    InstallPackagesError: () => {
+      return Effect.succeed("Failed to install packages");
+    },
+    InvalidJsonError: () => {
+      return Effect.succeed("Invalid package.json");
+    },
+  }),
+);
+
+Effect.runPromise(recoveredProgram).then(console.log, console.error);
