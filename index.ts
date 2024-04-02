@@ -8,8 +8,10 @@ import { sortByUsageAndName } from "./sortByUsageAndName.ts";
 import { getPWD } from "./getPWD.ts";
 import { installPackages } from "./installPackages.ts";
 
+import { yarn } from "./PackageManager/yarn.ts";
+
 const usageMap = new Map<string, number>([
-  ["dev:storybook", 1],
+  ["dev:storybook-main", 2],
   ["dev:editor", 1],
 ]);
 
@@ -106,4 +108,7 @@ const recoveredProgram = program.pipe(
   }),
 );
 
-Effect.runPromise(recoveredProgram).then(console.log, console.error);
+Effect.runPromise(Effect.provide(recoveredProgram, yarn)).then(
+  console.log,
+  console.error,
+);

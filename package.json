@@ -17,7 +17,7 @@
     "@effect/schema": "^0.63.1",
     "@inquirer/checkbox": "^2.1.0",
     "bun": "^1.0.29",
-    "effect": "^2.4.0"
+    "effect": "^2.4.1"
   },
-  "version": "0.0.10"
+  "version": "0.0.11"
 }
