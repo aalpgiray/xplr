@@ -1,8 +1,5 @@
-import { Effect, pipe } from "effect";
-
-class WriteToHomeDirectoryError {
-  readonly _tag = "WriteToHomeDirectoryError";
-}
+import { Effect } from "effect";
+import { FileSystem } from "./FileSystem";
 
 interface WriteToFileParameters {
   data: string;
@@ -10,10 +7,7 @@ interface WriteToFileParameters {
 }
 
 export const writeJsonFile = ({ data, path }: WriteToFileParameters) => {
-  return pipe(
-    Effect.tryPromise({
-      try: () => Bun.write(path, data),
-      catch: () => Effect.fail(new WriteToHomeDirectoryError()),
-    }),
+  return FileSystem.pipe(
+    Effect.flatMap((fileSystem) => fileSystem.writeFile(path, data)),
   );
 };

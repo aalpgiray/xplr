@@ -1,4 +1,4 @@
-import { Console, Effect, Fiber, pipe, ReadonlyArray } from "effect";
+import { Console, Effect, Fiber, Layer, pipe, ReadonlyArray } from "effect";
 import { getPackages } from "./getPackages.ts";
 import { packageSelector } from "./packageSelector.ts";
 import { scriptRunner } from "./scriptRunner.ts";
@@ -9,15 +9,16 @@ import { getPWD } from "./getPWD.ts";
 import { installPackages } from "./installPackages.ts";
 
 import { yarn } from "./PackageManager/yarn.ts";
-
-const usageMap = new Map<string, number>([
-  ["dev:storybook-main", 2],
-  ["dev:editor", 1],
-]);
+import { bunFileSystem } from "./FileSystem/bunFileSystem.ts";
+import { readUserPreference } from "./readUserPreference.ts";
+import { writeJsonFile } from "./writeJsonFile.ts";
 
 class NoPackagesSelectedError {
   readonly _tag = "NoPackagesSelectedError";
 }
+
+const homeDirectory = import.meta.env["HOME"] || import.meta.env["USERPROFILE"];
+const configPath = `${homeDirectory}/.xplrc`;
 
 const program = Effect.gen(function* (_) {
   const runningDirectory = yield* _(getPWD);
@@ -30,6 +31,8 @@ const program = Effect.gen(function* (_) {
     Effect.fork(installPackages(runningDirectory)),
   );
 
+  const userPreference = yield* _(readUserPreference(configPath));
+
   const selectedPackages = yield* _(
     pipe(
       packages,
@@ -37,7 +40,7 @@ const program = Effect.gen(function* (_) {
       Effect.map(
         ReadonlyArray.map((p) => ({
           ...p,
-          usage: usageMap.get(`${scriptName}:${p.name}`) ?? 0,
+          usage: userPreference.get(`${scriptName}:${p.name}`) ?? 0,
         })),
       ),
       Effect.map(filterPackagesHasTheScript(scriptName)),
@@ -58,6 +61,29 @@ const program = Effect.gen(function* (_) {
       ]),
       Effect.tap(([_, log]) => Console.log(log)),
       Effect.tap(() => Console.log("Packages installed")),
+    ),
+  );
+
+  yield* _(
+    pipe(
+      Effect.succeed(userPreference),
+      Effect.map((preference) => {
+        selectedPackages.forEach((s) => {
+          const preferenceName = `${scriptName}:${s.name}`;
+          preference.set(
+            preferenceName,
+            (preference.get(preferenceName) ?? 0) + 1,
+          );
+        });
+
+        return preference;
+      }),
+      Effect.tap((preference) =>
+        writeJsonFile({
+          data: JSON.stringify([...preference]),
+          path: configPath,
+        }),
+      ),
     ),
   );
 
@@ -84,8 +110,8 @@ const recoveredProgram = program.pipe(
     InvalidDirectoryError: () => {
       return Effect.succeed("Invalid directory");
     },
-    ReadJsonFileError: () => {
-      return Effect.succeed("Failed to read package.json");
+    FileReadError: (error) => {
+      return Effect.succeed(error.message);
     },
     ParseError: () => {
       return Effect.succeed("Failed to parse package.json");
@@ -108,7 +134,9 @@ const recoveredProgram = program.pipe(
   }),
 );
 
-Effect.runPromise(Effect.provide(recoveredProgram, yarn)).then(
+const context = Layer.merge(yarn, bunFileSystem);
+
+Effect.runPromise(Effect.provide(recoveredProgram, context)).then(
   console.log,
   console.error,
 );
