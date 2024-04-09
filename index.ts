@@ -5,7 +5,7 @@ import { scriptRunner } from "./scriptRunner.ts";
 import { discoverPackageScripts } from "./discoverPackageScripts.ts";
 import { filterPackagesHasTheScript } from "./filterPackagesHasTheScript.ts";
 import { sortByUsageAndName } from "./sortByUsageAndName.ts";
-import { getPWD } from "./getPWD.ts";
+import { getEnvVariable } from "./getEnvVariable.ts";
 import { installPackages } from "./installPackages.ts";
 
 import { yarn } from "./PackageManager/yarn.ts";
@@ -17,13 +17,24 @@ class NoPackagesSelectedError {
   readonly _tag = "NoPackagesSelectedError";
 }
 
-const homeDirectory = import.meta.env["HOME"] || import.meta.env["USERPROFILE"];
-const configPath = `${homeDirectory}/.xplrc`;
-
 const program = Effect.gen(function* (_) {
-  const runningDirectory = yield* _(getPWD);
+  const runningDirectory = yield* _(getEnvVariable("PWD"));
+  const homeDirectory = yield* _(
+    pipe(
+      getEnvVariable("HOME"),
+      Effect.orElse(() => getEnvVariable("USERPROFILE")),
+    ),
+  );
 
-  const [scriptName] = import.meta.env["ARGS"]?.slice(2) ?? ["dev"];
+  const [scriptName] = yield* _(
+    pipe(
+      getEnvVariable("ARGS"),
+      Effect.map((v) => v.slice(2)),
+      Effect.orElse(() => Effect.succeed(["dev"])),
+    ),
+  );
+
+  const configPath = `${homeDirectory}/.xplrc`;
 
   const packages = yield* _(getPackages(runningDirectory));
 
@@ -110,8 +121,8 @@ const program = Effect.gen(function* (_) {
 
 const recoveredProgram = program.pipe(
   Effect.catchTags({
-    InvalidDirectoryError: () => {
-      return Effect.succeed("Invalid directory");
+    InvalidVariableError: (error) => {
+      return Effect.succeed(error.message);
     },
     FileReadError: (error) => {
       return Effect.succeed(error.message);
@@ -142,7 +153,6 @@ const recoveredProgram = program.pipe(
 
 const context = Layer.merge(yarn, bunFileSystem);
 
-Effect.runPromise(Effect.provide(recoveredProgram, context)).then(
-  console.log,
-  console.error,
-);
+const productionProgram = Effect.provide(recoveredProgram, context);
+
+Effect.runPromise(productionProgram).then(console.log, console.error);
