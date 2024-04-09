@@ -31,7 +31,10 @@ const program = Effect.gen(function* (_) {
     Effect.fork(installPackages(runningDirectory)),
   );
 
-  const userPreference = yield* _(readUserPreference(configPath));
+  const userPreference = yield* _(
+    pipe(readUserPreference(configPath)),
+    Effect.orElse(() => Effect.succeed(new Map<string, number>())),
+  );
 
   const selectedPackages = yield* _(
     pipe(
@@ -111,6 +114,9 @@ const recoveredProgram = program.pipe(
       return Effect.succeed("Invalid directory");
     },
     FileReadError: (error) => {
+      return Effect.succeed(error.message);
+    },
+    FileWriteError: (error) => {
       return Effect.succeed(error.message);
     },
     ParseError: () => {

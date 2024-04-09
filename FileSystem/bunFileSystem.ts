@@ -10,9 +10,7 @@ export const bunFileSystem = Layer.succeed(
           const file = Bun.file(path);
           return file.text();
         },
-        catch: (error) => {
-          console.log(error);
-
+        catch: () => {
           return new FileReadError(path);
         },
       });
