@@ -8,12 +8,14 @@ interface ScriptRunnerParameters {
   packageName: string;
   scriptName: string;
   directory: string;
+  restArgs?: string[];
 }
 
 export const scriptRunner = ({
   packageName,
   scriptName,
   directory,
+  restArgs = [],
 }: ScriptRunnerParameters) =>
   Effect.try({
     try: () => {
@@ -29,13 +31,16 @@ export const scriptRunner = ({
         });
       };
 
-      const proc = Bun.spawn(["yarn", "workspace", packageName, scriptName], {
-        cwd: directory,
-        stdio: ["inherit", "inherit", "inherit"],
-        onExit: () => {
-          revertLocalLink();
+      const proc = Bun.spawn(
+        ["yarn", "workspace", packageName, scriptName, ...restArgs],
+        {
+          cwd: directory,
+          stdio: ["inherit", "inherit", "inherit"],
+          onExit: () => {
+            revertLocalLink();
+          },
         },
-      });
+      );
 
       process.on("SIGINT", () => {
         proc.kill();
