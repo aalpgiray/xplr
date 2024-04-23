@@ -18,8 +18,9 @@ export class FileReadError {
   }
 }
 
-export const getEnvVariable = (variableName: string) =>
-  pipe(
+export const getEnvVariable = (variableName: string) => {
+  return pipe(
     Effect.fromNullable(import.meta.env[variableName]),
     Effect.catchAll(() => Effect.fail(new InvalidVariableError(variableName))),
   );
+};

@@ -26,9 +26,9 @@ const program = Effect.gen(function* (_) {
     ),
   );
 
-  const [scriptName] = yield* _(
+  const [scriptName, ...restArgs] = yield* _(
     pipe(
-      getEnvVariable("ARGS"),
+      Effect.fromNullable(Bun.argv),
       Effect.map((v) => v.slice(2)),
       Effect.orElse(() => Effect.succeed(["dev"])),
     ),
@@ -108,6 +108,7 @@ const program = Effect.gen(function* (_) {
           packageName: s.value,
           scriptName,
           directory: runningDirectory,
+          restArgs,
         }),
       ),
       {
