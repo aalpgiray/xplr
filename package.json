@@ -10,14 +10,14 @@
   ],
   "devDependencies": {
     "@types/bun": "latest",
-    "prettier": "^3.2.5",
-    "typescript": "^5.3.3",
-    "@effect/cli": "^0.34.2",
-    "@effect/platform-bun": "^0.32.9",
-    "@effect/schema": "^0.63.1",
-    "@inquirer/checkbox": "^2.1.0",
-    "bun": "^1.0.29",
-    "effect": "^2.4.18"
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.3",
+    "@effect/cli": "^0.34.3",
+    "@effect/platform-bun": "^0.32.42",
+    "@effect/schema": "^0.63.4",
+    "@inquirer/checkbox": "^2.4.1",
+    "bun": "^1.1.20",
+    "effect": "^2.4.19"
   },
-  "version": "0.0.19"
+  "version": "0.0.20"
 }

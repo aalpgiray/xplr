@@ -1,7 +1,6 @@
 import { Effect, Layer } from "effect";
 import { InstallPackagesError } from "../installPackages.ts";
 import { PackageManager } from "./index.ts";
-import { $ } from "bun";
 import { DiscoverPackagesError } from "../getPackages.ts";
 
 export const yarn = Layer.succeed(
@@ -26,9 +25,13 @@ export const yarn = Layer.succeed(
     discoverWorkspacePackages: (directory) =>
       Effect.tryPromise({
         try: async () => {
-          const lines = await Array.fromAsync(
-            $`yarn workspaces list --json`.cwd(directory).lines(),
-          );
+          const proc = Bun.spawnSync(["yarn", "workspaces", "list", "--json"], {
+            cwd: directory,
+          });
+
+          const result = await new Response(proc.stdout).text();
+
+          const lines = result.split("\n");
 
           return lines
             .filter((a) => a)
