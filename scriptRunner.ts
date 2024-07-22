@@ -8,6 +8,7 @@ interface ScriptRunnerParameters {
   packageName: string;
   scriptName: string;
   directory: string;
+  onExit: () => void;
   restArgs?: string[];
 }
 
@@ -15,37 +16,24 @@ export const scriptRunner = ({
   packageName,
   scriptName,
   directory,
+  onExit,
   restArgs = [],
 }: ScriptRunnerParameters) =>
   Effect.try({
     try: () => {
-      Bun.spawn(["linkup", "local", packageName], {
-        cwd: directory,
-        stdio: ["ignore", "ignore", "ignore"],
-      });
-
-      const revertLocalLink = () => {
-        Bun.spawn(["linkup", "remote", packageName], {
-          cwd: directory,
-          stdio: ["ignore", "ignore", "ignore"],
-        });
-      };
-
       const proc = Bun.spawn(
         ["yarn", "workspace", packageName, scriptName, ...restArgs],
         {
           cwd: directory,
           stdio: ["inherit", "inherit", "inherit"],
-          onExit: () => {
-            revertLocalLink();
-          },
+          onExit,
         },
       );
 
       process.on("SIGINT", () => {
         proc.kill();
 
-        revertLocalLink();
+        onExit();
       });
     },
     catch: () => new ScriptRunnerError(),

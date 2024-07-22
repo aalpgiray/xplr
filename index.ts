@@ -12,6 +12,7 @@ import { yarn } from "./PackageManager/yarn.ts";
 import { bunFileSystem } from "./FileSystem/bunFileSystem.ts";
 import { readUserPreference } from "./readUserPreference.ts";
 import { writeJsonFile } from "./writeJsonFile.ts";
+import { startLinkup } from "./startLinkup.ts";
 
 class NoPackagesSelectedError {
   readonly _tag = "NoPackagesSelectedError";
@@ -112,6 +113,17 @@ const program = Effect.gen(function* (_) {
     ),
   );
 
+  const linkupsCleaners = yield* _(
+    Effect.all(
+      selectedPackages.map((s) =>
+        startLinkup({
+          packageName: s.value,
+          directory: runningDirectory,
+        }),
+      ),
+    ),
+  );
+
   yield* _(
     Effect.all(
       selectedPackages.map((s) =>
@@ -120,6 +132,9 @@ const program = Effect.gen(function* (_) {
           scriptName,
           directory: runningDirectory,
           restArgs,
+          onExit: () => {
+            linkupsCleaners.forEach((cleaner) => cleaner());
+          },
         }),
       ),
       {
