@@ -5,8 +5,8 @@ class InvalidJsonError {
   readonly _tag = "InvalidJsonError";
 }
 
-const PackageJson = S.struct({
-  scripts: S.record(S.string, S.string),
+const PackageJson = S.Struct({
+  scripts: S.Record({ key: S.String, value: S.String }),
 });
 
 export const parsePackageJson = (text: string) =>

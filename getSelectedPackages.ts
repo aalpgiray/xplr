@@ -1,5 +1,5 @@
 import type { Package } from "./PackageManager";
-import { Effect, pipe, ReadonlyArray } from "effect";
+import { Array, Effect, pipe } from "effect";
 import { discoverPackageScripts } from "./discoverPackageScripts.ts";
 import { filterPackagesHasTheScript } from "./filterPackagesHasTheScript.ts";
 import { sortByUsageAndName } from "./sortByUsageAndName.ts";
@@ -15,7 +15,7 @@ export function getSelectedPackages(
     packages,
     discoverPackageScripts(runningDirectory),
     Effect.map(
-      ReadonlyArray.map((p) => ({
+      Array.map((p) => ({
         ...p,
         usage: userPreference.get(`${scriptName}:${p.name}`) ?? 0,
       })),

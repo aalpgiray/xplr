@@ -1,4 +1,4 @@
-import { Order, ReadonlyArray } from "effect";
+import { Array, Order } from "effect";
 
 const byName = Order.mapInput(
   Order.string,
@@ -8,7 +8,7 @@ const byUsage = Order.mapInput(
   Order.number,
   (script: { usage: number }) => script.usage,
 );
-export const sortByUsageAndName = ReadonlyArray.sort(
+export const sortByUsageAndName = Array.sort(
   Order.combine<{ name: string; usage: number }>(
     Order.reverse(byUsage),
     byName,

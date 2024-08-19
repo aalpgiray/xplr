@@ -9,15 +9,15 @@
     "bin/"
   ],
   "devDependencies": {
-    "@types/bun": "latest",
+    "@effect/cli": "^0.41.1",
+    "@effect/platform-bun": "^0.42.1",
+    "@effect/schema": "^0.71.0",
+    "@inquirer/checkbox": "^2.4.7",
+    "@types/bun": "^1.1.6",
+    "bun": "^1.1.24",
+    "effect": "^3.6.4",
     "prettier": "^3.3.3",
-    "typescript": "^5.5.3",
-    "@effect/cli": "^0.34.3",
-    "@effect/platform-bun": "^0.32.42",
-    "@effect/schema": "^0.63.4",
-    "@inquirer/checkbox": "^2.4.1",
-    "bun": "^1.1.20",
-    "effect": "^2.4.19"
+    "typescript": "^5.5.4"
   },
   "version": "0.0.22"
 }
