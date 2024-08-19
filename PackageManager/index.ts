@@ -2,7 +2,7 @@ import { Context, Effect } from "effect";
 import { InstallPackagesError } from "../installPackages.ts";
 import { DiscoverPackagesError } from "../getPackages.ts";
 
-interface Package {
+export interface Package {
   name: string;
   value: string;
   location: string;

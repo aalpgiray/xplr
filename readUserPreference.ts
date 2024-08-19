@@ -13,4 +13,5 @@ export const readUserPreference = (path: string) =>
       catch: () => new UserPreferenceParsingError(),
     }),
     Effect.map((content) => new Map<string, number>(content)),
+    Effect.orElse(() => Effect.succeed(new Map<string, number>())),
   );
